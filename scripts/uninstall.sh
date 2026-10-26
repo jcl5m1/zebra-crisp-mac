@@ -31,6 +31,7 @@ for ppd in /etc/cups/ppd/*.ppd; do
 done
 
 rm -f /Library/Printers/PPDs/Contents/Resources/ZebraCrisp.ppd
+rm -f "/Library/PDF Services/Preview Zebra Output"
 rm -rf /Library/Printers/ZebraCrisp
 pkgutil --forget com.github.jcl5m1.zebra-crisp-mac >/dev/null 2>&1
 

@@ -62,6 +62,19 @@ Printer**, select your Zebra, and choose **Zebra ZPL Label Printer Crisp** under
   12.5% gray). **Darkness** still controls how dark the printer
   burns each dot.
 
+## Preview what will print
+
+Print previews (in Chrome or the macOS print dialog) are drawn by the app
+before the driver runs, so they show the smooth original, not what the
+printer will produce. To see the exact black-and-white output:
+
+1. In the macOS print dialog, open the **PDF** menu at the bottom left and
+   choose **Preview Zebra Output**. In Chrome, click **Print using system
+   dialog** first.
+2. Preview opens the label exactly as the printer will print it, using your
+   Zebra printer's label size and Line Weight. Zoom in to check text and
+   barcodes.
+
 ## Uninstall
 
 ```
@@ -99,6 +112,7 @@ printers aren't supported.
 |---|---|
 | `/Library/Printers/ZebraCrisp/rastertozebracrisp` | CUPS filter: thresholds the grayscale page and passes it to Apple's `rastertolabel` |
 | `/Library/Printers/ZebraCrisp/uninstall.sh` | Uninstaller |
+| `/Library/PDF Services/Preview Zebra Output` | Print dialog PDF menu item that shows exactly what will print |
 | `/Library/Printers/PPDs/Contents/Resources/ZebraCrisp.ppd` | Driver description: Apple's Zebra ZPL PPD, changed to render 8-bit grayscale and use the filter above, plus the Line Weight option |
 
 ## Build from source
@@ -106,10 +120,10 @@ printers aren't supported.
 Requires the Xcode Command Line Tools (`xcode-select --install`).
 
 ```
-./build.sh 1.0.0
+./build.sh 1.2.0
 ```
 
-This produces `dist/ZebraCrisp-1.0.0.pkg`.
+This produces `dist/ZebraCrisp-1.2.0.pkg`.
 
 ## License
 

@@ -9,7 +9,7 @@ BUILD=build
 ROOT="$BUILD/root"
 
 rm -rf "$BUILD" dist
-mkdir -p "$ROOT/Library/Printers/ZebraCrisp" "$ROOT/Library/Printers/PPDs/Contents/Resources" dist
+mkdir -p "$ROOT/Library/Printers/ZebraCrisp" "$ROOT/Library/Printers/PPDs/Contents/Resources" "$ROOT/Library/PDF Services" dist
 
 clang -O2 -Wall -Wno-deprecated-declarations -arch arm64 -arch x86_64 \
   -mmacosx-version-min=11.0 -o "$ROOT/Library/Printers/ZebraCrisp/rastertozebracrisp" \
@@ -19,6 +19,8 @@ cp ppd/ZebraCrisp.ppd "$ROOT/Library/Printers/PPDs/Contents/Resources/ZebraCrisp
 cp scripts/uninstall.sh "$ROOT/Library/Printers/ZebraCrisp/uninstall.sh"
 chmod 755 "$ROOT/Library/Printers/ZebraCrisp/"*
 chmod 644 "$ROOT/Library/Printers/PPDs/Contents/Resources/ZebraCrisp.ppd"
+cp "pdfservice/Preview Zebra Output" "$ROOT/Library/PDF Services/"
+chmod 755 "$ROOT/Library/PDF Services/Preview Zebra Output"
 
 mkdir -p "$BUILD/scripts"
 cp scripts/postinstall "$BUILD/scripts/postinstall"

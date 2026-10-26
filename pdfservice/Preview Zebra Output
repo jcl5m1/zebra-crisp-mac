@@ -1,0 +1,55 @@
+#!/bin/bash
+# macOS PDF Service: in the print dialog choose PDF > Preview Zebra Output to
+# see exactly what a Zebra printer using zebra-crisp-mac will print (the
+# same black/white conversion, label size and Line Weight), opened in Preview.
+#
+# macOS calls this with: title, print options, path to the PDF.
+
+TITLE="${1:-Label}"
+PDF="$3"
+FILTER=/Library/Printers/ZebraCrisp/rastertozebracrisp
+GENERIC_PPD=/Library/Printers/PPDs/Contents/Resources/ZebraCrisp.ppd
+
+alert() {
+  osascript -e "display alert \"Preview Zebra Output\" message \"$1\" as warning" >/dev/null 2>&1
+  exit 1
+}
+
+[ -f "$PDF" ] || alert "No document was received from the print dialog."
+[ -x "$FILTER" ] || alert "zebra-crisp-mac isn't installed."
+
+is_crisp() { grep -q '^\*NickName: "Zebra ZPL Label Printer Crisp"' "/etc/cups/ppd/$1.ppd" 2>/dev/null; }
+
+# Use the default printer if it's a crisp Zebra, else the first crisp Zebra.
+queue="$(lpstat -d 2>/dev/null | sed -n 's/^system default destination: //p')"
+if ! is_crisp "$queue"; then
+  queue=""
+  for q in $(lpstat -e 2>/dev/null); do
+    if is_crisp "$q"; then queue="$q"; break; fi
+  done
+fi
+
+opts=()
+if [ -n "$queue" ]; then
+  PPD_FILE="/etc/cups/ppd/$queue.ppd"
+  # That printer's saved label size, resolution and Line Weight.
+  current="$(lpoptions -p "$queue" -l 2>/dev/null)"
+  for opt in PageSize Resolution zeCrispLineWeight; do
+    value="$(printf '%s\n' "$current" | sed -n "s/^$opt\/[^:]*:.*\*\([^ ]*\).*/\1/p")"
+    [ -n "$value" ] && opts+=("$opt=$value")
+  done
+else
+  PPD_FILE="$GENERIC_PPD"
+fi
+
+work="$(mktemp -d)"
+cf_args=()
+for o in "${opts[@]}"; do cf_args+=(-o "$o"); done
+cupsfilter -p "$PPD_FILE" -m application/vnd.cups-raster "${cf_args[@]}" "$PDF" > "$work/page.ras" 2>/dev/null
+[ -s "$work/page.ras" ] || alert "Couldn't render the document."
+
+out="$work/Zebra Preview - ${TITLE//\//-}.pdf"
+ZEBRA_CRISP_PREVIEW=1 PPD="$PPD_FILE" "$FILTER" 1 "$USER" "$TITLE" 1 "${opts[*]}" "$work/page.ras" > "$out" 2>/dev/null \
+  || alert "Couldn't create the preview."
+rm -f "$work/page.ras"
+open -a Preview "$out"
