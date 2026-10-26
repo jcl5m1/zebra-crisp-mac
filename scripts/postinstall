@@ -1,11 +1,43 @@
 #!/bin/bash
-# Switches existing printers that use Apple's stock "Zebra ZPL Label Printer"
-# driver (or an older copy of this one) to the crisp driver, keeping each
-# printer's saved defaults.  New printers can pick "Zebra ZPL Label Printer
-# Crisp" in System Settings > Printers & Scanners > Add Printer.
+# Asks for the default label size, then switches existing printers that use
+# Apple's stock "Zebra ZPL Label Printer" driver (or an older copy of this
+# one) to the crisp driver, keeping each printer's saved defaults.  New
+# printers can pick "Zebra ZPL Label Printer Crisp" in System Settings >
+# Printers & Scanners > Add Printer.
 
 NEW_PPD="/Library/Printers/PPDs/Contents/Resources/ZebraCrisp.ppd"
 OPTIONS="PageSize Resolution zeMediaTracking MediaType Darkness zePrintRate zeLabelTop zePrintMode zeTearOffPosition zeErrorReprint zeCrispLineWeight"
+
+# Ask the logged-in user for the default label size (GUI installs only).
+# "Keep Current" or no answer leaves each printer's size unchanged.
+page_size=""
+console_user="$(stat -f %Su /dev/console)"
+if [ "$COMMAND_LINE_INSTALL" != "1" ] && [ -n "$console_user" ] && [ "$console_user" != "root" ]; then
+  answer="$(launchctl asuser "$(id -u "$console_user")" sudo -u "$console_user" osascript <<'APPLESCRIPT' 2>/dev/null
+set sizes to {"4 x 6 in (shipping labels)", "4 x 5 in", "4 x 4 in", "4 x 3 in", "4 x 2 in", "4 x 1 in", "3 x 2 in", "3 x 1 in", "2.25 x 1.25 in", "2 x 1 in"}
+set picked to choose from list sizes with title "Zebra Crisp" with prompt "Default label size for your Zebra printer:" default items {"4 x 6 in (shipping labels)"} OK button name "Use This Size" cancel button name "Keep Current"
+if picked is false then return ""
+return item 1 of picked
+APPLESCRIPT
+)"
+  case "$answer" in
+    "4 x 6"*)        page_size=w288h432 ;;
+    "4 x 5 in")      page_size=w288h360 ;;
+    "4 x 4 in")      page_size=w288h288 ;;
+    "4 x 3 in")      page_size=w288h216 ;;
+    "4 x 2 in")      page_size=w288h144 ;;
+    "4 x 1 in")      page_size=w288h72 ;;
+    "3 x 2 in")      page_size=w216h144 ;;
+    "3 x 1 in")      page_size=w216h72 ;;
+    "2.25 x 1.25 in") page_size=w162h90 ;;
+    "2 x 1 in")      page_size=w144h72 ;;
+  esac
+fi
+
+# New printers added later start with the chosen size too.
+if [ -n "$page_size" ]; then
+  sed -i '' -E "s/^\*Default(PageSize|PageRegion|ImageableArea|PaperDimension): .*/*Default\1: $page_size/" "$NEW_PPD"
+fi
 
 for ppd in /etc/cups/ppd/*.ppd; do
   [ -f "$ppd" ] || continue
@@ -17,6 +49,7 @@ for ppd in /etc/cups/ppd/*.ppd; do
   defaults=()
   for opt in $OPTIONS; do
     value="$(printf '%s\n' "$current" | sed -n "s/^$opt=//p" | head -1)"
+    [ "$opt" = PageSize ] && [ -n "$page_size" ] && value="$page_size"
     [ -n "$value" ] && defaults+=(-o "$opt-default=$value")
   done
 

@@ -20,7 +20,8 @@ of scattered dots. On a 203 dpi label printer those dots make every edge look
 ragged. The stock driver has no setting to turn dithering off.
 
 zebra-crisp-mac has macOS render in 8-bit grayscale instead, converts each
-pixel to pure black or white with a clean threshold (no dithering), and then
+pixel to pure black or white with a clean threshold (no dithering): anything
+darker than 25% gray prints black. It then
 hands the result to Apple's own Zebra driver code. Darkness, print speed,
 label top, tear-off and every other setting work exactly as before.
 
@@ -32,10 +33,13 @@ label top, tear-off and every other setting work exactly as before.
    **right-click (or Control-click) the file and choose Open**, then Open again.
    On recent macOS versions you may need to go to **System Settings > Privacy &
    Security** and click **Open Anyway**.
-3. Follow the installer.
+3. Follow the installer. It asks for your default label size (4 x 6 in for
+   shipping labels is preselected). Choose **Keep Current** to leave each
+   printer's size as it is.
 
 The installer automatically switches any printer already using Apple's
-**Zebra ZPL Label Printer** driver to the crisp driver and keeps its settings.
+**Zebra ZPL Label Printer** driver to the crisp driver and keeps its other
+settings.
 
 To add a new printer, go to **System Settings > Printers & Scanners > Add
 Printer**, select your Zebra, and choose **Zebra ZPL Label Printer Crisp** under
@@ -48,8 +52,10 @@ Printer**, select your Zebra, and choose **Zebra ZPL Label Printer Crisp** under
   shrinks it and softens it.
 - In Chrome, set **Margins: None**. If the label image is sideways, set
   **Layout: Landscape**.
-- **Line Weight** (Thin / Normal / Bold) in the printer options controls how
-  heavy thin strokes print. **Darkness** still controls how dark the printer
+- **Line Weight** in the printer options controls how heavy thin strokes
+  print by changing which grays print black: **Thin** (darker than 50% gray),
+  **Normal** (darker than 25% gray, the default) or **Bold** (darker than
+  12.5% gray). **Darkness** still controls how dark the printer
   burns each dot.
 
 ## Uninstall

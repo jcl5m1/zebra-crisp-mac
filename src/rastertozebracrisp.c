@@ -37,9 +37,12 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  /* Threshold: K values >= this become black.  The "Line Weight" PPD
-   * option moves it so thin strokes print lighter or heavier. */
-  int threshold = 128;
+  /* Threshold: K values >= this become black (K: 0 = white, 255 = black).
+   * Normal prints anything darker than 25% gray as black; the "Line Weight"
+   * PPD option moves it so thin strokes print lighter or heavier.  macOS
+   * color-corrects grays before they reach us (25% gray in the document
+   * arrives as K=78), so the cutoffs are measured, not simply 25% of 255. */
+  int threshold = 79;                   /* darker than 25% gray */
   ppd_file_t *ppd = ppdOpenFile(getenv("PPD"));
   if (ppd) {
     cups_option_t *options = NULL;
@@ -48,9 +51,9 @@ int main(int argc, char *argv[])
     cupsMarkOptions(ppd, num_options, options);
     ppd_choice_t *weight = ppdFindMarkedChoice(ppd, "zeCrispLineWeight");
     if (weight && !strcmp(weight->choice, "Thin"))
-      threshold = 192;
+      threshold = 147;                  /* darker than 50% gray */
     else if (weight && !strcmp(weight->choice, "Bold"))
-      threshold = 64;
+      threshold = 41;                   /* darker than 12.5% gray */
     cupsFreeOptions(num_options, options);
     ppdClose(ppd);
   }
