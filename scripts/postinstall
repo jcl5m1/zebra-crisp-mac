@@ -1,0 +1,29 @@
+#!/bin/bash
+# Switches existing printers that use Apple's stock "Zebra ZPL Label Printer"
+# driver (or an older copy of this one) to the crisp driver, keeping each
+# printer's saved defaults.  New printers can pick "Zebra ZPL Label Printer
+# Crisp" in System Settings > Printers & Scanners > Add Printer.
+
+NEW_PPD="/Library/Printers/PPDs/Contents/Resources/ZebraCrisp.ppd"
+OPTIONS="PageSize Resolution zeMediaTracking MediaType Darkness zePrintRate zeLabelTop zePrintMode zeTearOffPosition zeErrorReprint zeCrispLineWeight"
+
+for ppd in /etc/cups/ppd/*.ppd; do
+  [ -f "$ppd" ] || continue
+  grep -qE '^\*NickName: "Zebra ZPL Label Printer( Crisp)?"' "$ppd" || continue
+  queue="$(basename "$ppd" .ppd)"
+
+  # Saved defaults live on the CUPS server, not in the queue's PPD copy.
+  current="$(lpoptions -p "$queue" | tr ' ' '\n')"
+  defaults=()
+  for opt in $OPTIONS; do
+    value="$(printf '%s\n' "$current" | sed -n "s/^$opt=//p" | head -1)"
+    [ -n "$value" ] && defaults+=(-o "$opt-default=$value")
+  done
+
+  echo "Switching printer $queue to the crisp driver"
+  lpadmin -p "$queue" -P "$NEW_PPD"
+  # Defaults must be a separate call; lpadmin drops them when given with -P.
+  [ ${#defaults[@]} -gt 0 ] && lpadmin -p "$queue" "${defaults[@]}"
+done
+
+exit 0
