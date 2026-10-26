@@ -7,11 +7,14 @@ fuzzy or speckled on your Zebra, this replaces the one step in Apple's
 built-in Zebra driver that causes it. Labels print as sharp as the printer
 allows, the same as printing raw ZPL.
 
-![Before and after: the stock driver prints dotted, ragged text and barcode bars; zebra-crisp-mac prints clean edges](docs/before-after-text-barcode.png)
+![Before and after: the stock driver prints dotted, ragged text and barcode bars; zebra-crisp-mac prints clean edges](docs/before-after-scan.png)
 
 *The address text and Code 128 barcode of the same test label through each
 driver, decoded from the ZPL each one sends to the printer (203 dpi, shown at
-2x).*
+2x). The barcode encodes `CRISP-TEST-12345`, printed below it so you can check
+a scan. In our test, a simple scan-line decoder read the crisp barcode on all
+180 rows and the stock driver's on none; real handheld scanners are more
+forgiving, but ragged edges still make reads less reliable.*
 
 ## Why labels print fuzzy
 
